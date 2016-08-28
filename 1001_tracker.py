@@ -6,6 +6,7 @@ import re
 import sys
 import json
 import tkinter
+import math
 
 # Configuration
 #log_file_path = "C:/Users/" + os.getenv('username') + "/Documents/My Games/Binding of Isaac Rebirth/log.txt"
@@ -66,14 +67,28 @@ class Item1001Tracker(tkinter.Frame):
         self.icon = tkinter.PhotoImage(file='collectibles/collectibles_076.png')
         self.window.tk.call('wm', 'iconphoto', self.window._w, self.icon)  # Set the GUI icon
         self.window.protocol('WM_DELETE_WINDOW', sys.exit)  # Close the main GUI when the window is closed
+
+        # Initialize the label and the canvas
         self.left_label = tkinter.Label(self.window, font='font 20 bold')
-        self.left_label.grid(row=0)
-        self.canvas = tkinter.Canvas(self.window, width=500)
-        self.canvas.grid(row=1)
+        self.left_label.pack(fill=tkinter.X, expand=tkinter.NO)
+        self.canvas = tkinter.Canvas(self.window, width=646)  # Just enough width to make 10 columns
+        self.canvas.pack(fill=tkinter.BOTH, expand=tkinter.YES)
+        self.canvas.bind('<Configure>', lambda event: self.drawUI())
+
+        # Define keyboard bindings
+        self.window.bind('<MouseWheel>', self.on_mousewheel)
+        self.window.bind('<Home>', lambda event: self.canvas.yview_moveto(0))
+        self.window.bind('<End>', lambda event: self.canvas.yview_moveto(1))
+        self.window.bind('<Prior>', lambda event: self.canvas.yview_scroll(-1, 'pages'))  # PgUp
+        self.window.bind('<Next>', lambda event: self.canvas.yview_scroll(1, 'pages'))  # PgDn
 
         # Initialization
         self.drawUI()
         self.parseLog()
+
+    # on_mousewheel - Code taken from: http://stackoverflow.com/questions/17355902/python-tkinter-binding-mousewheel-to-scrollbar
+    def on_mousewheel(self, event):
+        self.canvas.yview_scroll(int(-1 * (event.delta / 120)), 'units')
 
     def drawUI(self):
         items_remaining = str(len(self.items_remaining_list)) + ' items remaining.'
@@ -81,15 +96,22 @@ class Item1001Tracker(tkinter.Frame):
 
         self.canvas.delete("all")
 
-        draw_x = 32
-        draw_y = 32
+        x = 34  # We start an extra 2 pixels to the right so that the left border will show
+        y = 34  # We start an extra 2 pixels lower so that the top border will show
+        draw_x = x
+        draw_y = y
+        draw_w = 64
+        window_width = self.window.winfo_width()
+        columns = int(math.floor(window_width / (draw_w + 1)))
+
         for item_id in self.items_remaining_list:
             self.canvas.create_image((draw_x, draw_y), image=self.photos[item_id])
+            self.canvas.create_rectangle(draw_x - 32, draw_y - 32, draw_x + 32, draw_y + 32)
 
-            draw_x += 48
-            if draw_x == 32 + (48 * 10):
-                draw_x = 32
-                draw_y += 64
+            draw_x += draw_w
+            if draw_x == x + (draw_w * columns):
+                draw_x = x
+                draw_y += draw_w
 
     def parseLog(self):
         # Read the log into a variable
