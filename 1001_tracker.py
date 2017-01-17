@@ -1,5 +1,3 @@
-#! C:\Python34\python.exe
-
 # Imports
 import os
 import re
@@ -7,11 +5,10 @@ import sys
 import json
 import tkinter
 import math
+from tkinter import filedialog
+import struct
 
 # Configuration
-#log_file_path = "C:/Users/" + os.getenv('username') + "/Documents/My Games/Binding of Isaac Rebirth/log.txt"
-log_file_path = "C:/Users/" + os.getenv('username') + "/Documents/My Games/Binding of Isaac Afterbirth/log.txt"
-progress_file_name = 'progress.txt'
 
 # The Item1001Tracker class
 class Item1001Tracker(tkinter.Frame):
@@ -19,6 +16,13 @@ class Item1001Tracker(tkinter.Frame):
         # Class variables
         self.file_array_position = 0
         self.items_remaining_list = []
+        self.items_found_from_file = []
+        self.version = ""
+        self.items_total = 0
+        self.offset_start = 0
+        self.offset_end = 0
+        self.game_data_file = ""
+        self.all_item_ids = []
 
         # Welcome message
         print('Starting 1001% item tracker...')
@@ -26,38 +30,15 @@ class Item1001Tracker(tkinter.Frame):
         # Get a sorted list of all item IDs
         with open('items.json', 'r') as items_file:
             items_json = json.load(items_file)
-        all_item_ids = []
         for item_id, item_details in items_json.items():
-            all_item_ids.append(item_id)
-        all_item_ids.sort()
+            self.all_item_ids.append(item_id)
+        self.all_item_ids.sort()
 
         # Initialize the photo dictionary
         self.photos = {}
         for item_id in all_item_ids:
             image_path = 'collectibles/collectibles_' + item_id + '.png'
             self.photos[item_id] = tkinter.PhotoImage(file=image_path)
-
-        # Check for the existance of the progress file
-        if os.path.isfile(progress_file_name):
-            # Import the collected items
-            with open(progress_file_name) as progress_file:
-                for line in progress_file:
-                    self.items_remaining_list.append(line.strip())
-            print('Imported the "' + progress_file_name + '" file. ' + str(len(self.items_remaining_list)) + ' items remaining.')
-        else:
-            # Make a new list with every item
-            all_item_ids = []
-            for item_id, item_details in items_json.items():
-                all_item_ids.append(item_id)
-            all_item_ids.sort()
-            self.items_remaining_list = all_item_ids
-            f = open(progress_file_name,'w')
-            file_contents = ''
-            for item_id in all_item_ids:
-                file_contents += str(item_id) + '\n'
-            f.write(file_contents)
-            f.close()
-            print('Made a new "' + progress_file_name + '" file with ' + str(len(all_item_ids)) + ' entries.')
 
 
         # Initialize a new GUI window
@@ -84,14 +65,14 @@ class Item1001Tracker(tkinter.Frame):
 
         # Initialization
         self.drawUI()
-        self.parseLog()
+        self.parse_save()
 
     # on_mousewheel - Code taken from: http://stackoverflow.com/questions/17355902/python-tkinter-binding-mousewheel-to-scrollbar
     def on_mousewheel(self, event):
         self.canvas.yview_scroll(int(-1 * (event.delta / 120)), 'units')
 
     def drawUI(self):
-        items_remaining = str(len(self.items_remaining_list)) + ' items remaining.'
+        items_remaining = "{} items remaining in {}".format(str(len(self.items_remaining_list)), self.version) 
         self.left_label.configure(text=items_remaining)
 
         self.canvas.delete("all")
@@ -113,44 +94,37 @@ class Item1001Tracker(tkinter.Frame):
                 draw_x = x
                 draw_y += draw_w
 
-    def parseLog(self):
-        # Read the log into a variable
-        try:
-            with open(log_file_path, 'r') as f:
-                file_contents = f.read()
-        except Exception:
-            print("Failed to open the log file at \"" + log_file_path + "\".")
-            sys.exit(1)
+    def parse_save(self):
+        with open(self.game_data_file, 'rb') as file:
+            content = file.read()
+        self.version = struct.unpack('<b', content[12:13])[0]
+        # Find version from save file and assign values accordingly
+        if str(self.version) == '54':
+            self.item_total= 341
+            self.offset_start = 661
+            self.offset_end = self.offset_start + self.item_total
+        elif str(self.version) == '56':
+            self.version = "Afterbirth"
+            self.item_total= 441
+            self.offset_start = 1041
+            self.offset_end = self.offset_start + self.item_total
+        elif str(self.version) == '57':
+            self.version = "Afterbirth+"
+            self.item_total= 510
+            self.offset_start = 1041
+            self.offset_end = self.offset_start + self.item_total
+        else:
+            print("what are you?")
+            sys.exit(0)
+        #pull all items from the save file
+        self.items_from_file = struct.unpack('b'*self.item_total, content[self.offset_start:self.offset_end])
 
-        # Convert it to an array
-        file_array = file_contents.splitlines()
-
-        # Return to the start if we go past the end of the file (which occurs when the log file is truncated)
-        if self.file_array_position > len(file_array):
-            self.file_array_position = 0
-
-        # Process the log's new output
-        for line in file_array[self.file_array_position:]:
-
-            # Debug
-            #print(line)
-
-            # A new item was picked up
-            if line.startswith('Adding collectible'):
-                item_id = re.search(r'Adding collectible (\d+) ', line).group(1)
-                item_id = item_id.zfill(3)
-
-                # Remove it from the items array
-                if item_id in self.items_remaining_list:
-                    self.items_remaining_list.remove(item_id)
-                    print("Removed item from list:", item_id)
-
-                # Redraw the UI
-                self.drawUI()
-
-        # Set that we have read the log up to this point
-        self.file_array_position = len(file_array)
+        #figure out if we've touched the item -- some items may need to be skipped because the IDs aren't valid IE: itemID 43 doesn't exist
         
+
+        # Redraw the UI
+        self.drawUI()
+
         # Schedule another log parse in 0.25 seconds
         self.parent.after(250, self.parseLog)
 
@@ -160,7 +134,8 @@ if __name__ == '__main__':
     # Initialize the root GUI
     root = tkinter.Tk()
     root.withdraw()  # Hide the GUI
-
+    self.game_data_file = filedialog.askopenfilename() #Ask for the game file
+    
     # Show the GUI
     Item1001Tracker(root)
     root.mainloop()
