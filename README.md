@@ -10,7 +10,7 @@ This is a version of the item tracker for Rebirth, Afterbirth or Afterbirth+ to 
  * - ab_persistentgamedata{1,2,3}.dat = Afterbirth slot 1 2 or 3
  * - abp_persistentgamedata{1,2,3}.dat = Afterbirth+ slot 1 2 or 3
   		  
-There is no scrollbar, but you can use the following things to scroll:		  There is no scrollbar, but you can use the following things to scroll:
+There is no scrollbar, but you can use the following things to scroll:
 * Mouse wheel
 * Home / End
 * PgUp / PgDn
