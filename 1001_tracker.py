@@ -81,8 +81,7 @@ class Item1001Tracker(tkinter.Frame):
         self.canvas.yview_scroll(int(-1 * (event.delta / 120)), 'units')
 
     def drawUI(self):
-        
-        items_remaining = "{} items remaining in {}".format(self.item_total-len(self.items_found_from_file), self.version) 
+        items_remaining = "{} items remaining in {}".format(self.item_total-(len(self.items_found_from_file)+len(bad_ids)), self.version) 
         self.left_label.configure(text=items_remaining)
 
         self.canvas.delete("all")
@@ -137,7 +136,7 @@ class Item1001Tracker(tkinter.Frame):
         
         for i in range(0,self.item_total):
             try:
-                if self.items_from_file[i]:
+                if self.items_from_file[i] and i+1 not in bad_ids:
                     self.items_found_from_file[i+1] = self.all_item_ids[i]
             except Exception as e:
                 print(e, i)
