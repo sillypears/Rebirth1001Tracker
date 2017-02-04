@@ -21,12 +21,19 @@ class Item1001Tracker(tkinter.Frame):
         self.items_found_from_file = {}
         self.version = ""
         self.item_total = 0
-        self.offset_start = 0
-        self.offset_end = 0
+        self.item_offset_start = 0
+        self.item_offset_end = 0
+        self.achi_total = 0
+        self.achi_offset_start = 0
+        self.achi_offset_end = 0
+        self.chal_total = 0
+        self.chal_offset_start = 0
+        self.chal_offset_end = 0
         self.game_data_file = game_data_file
         self.all_item_ids = []
         self.items_from_file = []
         self.achi_from_file = []
+        self.chal_from_file = []
         # Welcome message
         print('Starting 1001% item tracker...')
 
@@ -140,12 +147,19 @@ class Item1001Tracker(tkinter.Frame):
             self.achi_final = 339
             self.achi_offset_start = 33 #0x21-0x173
             self.achi_offset_end = self.achi_offset_start + self.achi_total
+            self.chal_final = 35
+            self.chal_offset_start = 1859 #0x743-0x765
+            self.chal_offset_end = self.achi_offset_start + self.achi_total
         else:
             print("what are you?")
             sys.exit(0)
         
+        #Haven't checked for challenges or achievements from RB/AB, so only do this if AB+
+        if str(v) == '57':
+            self.achi_from_file = struct.unpack('b'*self.achi_total, content[self.achi_offset_start:self.achi_offset_end])
+            self.chal_from_file = struct.unpack('b'*self.chal_total, content[self.chal_offset_start:self.chal_offset_end])
+        
         #pull all items from the save file
-        self.achi_from_file = struct.unpack('b'*self.achi_total, content[self.achi_offset_start:self.achi_offset_end])
         self.items_from_file = struct.unpack('b'*self.item_total, content[self.item_offset_start:self.item_offset_end])
         
         for i in range(0,self.item_total):
