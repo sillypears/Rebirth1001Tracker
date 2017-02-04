@@ -26,6 +26,7 @@ class Item1001Tracker(tkinter.Frame):
         self.game_data_file = game_data_file
         self.all_item_ids = []
         self.items_from_file = []
+        self.achi_from_file = []
         # Welcome message
         print('Starting 1001% item tracker...')
 
@@ -115,24 +116,37 @@ class Item1001Tracker(tkinter.Frame):
         if str(v) == '54':
             self.version = "Rebirth"
             self.item_total= 346
-            self.offset_start = 676 #0x2A4-0x3FD
-            self.offset_end = self.offset_start + self.item_total
+            self.item_offset_start = 676 #0x2A4-0x3FD
+            self.item_offset_end = self.item_offset_start + self.item_total
+            self.achi_total = 178
+            self.achi_final = 84
+            self.achi_offset_start = 33 #0x21-0xD2
+            self.achi_offset_end = self.achi_offset_start + self.achi_total
         elif str(v) == '56':
             self.version = "Afterbirth"
             self.item_total= 441
-            self.offset_start = 1042 #0x412-0x
-            self.offset_end = self.offset_start + self.item_total
+            self.item_offset_start = 1042 #0x412-0x
+            self.item_offset_end = self.item_offset_start + self.item_total
+            self.achi_total = 276
+            self.achi_final = 235
+            self.achi_offset_start = 33 #0x21-0x???
+            self.achi_offset_end = self.achi_offset_start + self.achi_total
         elif str(v) == '57':
             self.version = "Afterbirth+"
             self.item_total= 510 
-            self.offset_start = 1233 #0x4D1-0x6CE
-            self.offset_end = self.offset_start + self.item_total
+            self.item_offset_start = 1233 #0x4D1-0x6CE
+            self.item_offset_end = self.item_offset_start + self.item_total
+            self.achi_total = 339
+            self.achi_final = 339
+            self.achi_offset_start = 33 #0x21-0x173
+            self.achi_offset_end = self.achi_offset_start + self.achi_total
         else:
             print("what are you?")
             sys.exit(0)
         
         #pull all items from the save file
-        self.items_from_file = struct.unpack('b'*self.item_total, content[self.offset_start:self.offset_end])
+        self.achi_from_file = struct.unpack('b'*self.achi_total, content[self.achi_offset_start:self.achi_offset_end])
+        self.items_from_file = struct.unpack('b'*self.item_total, content[self.item_offset_start:self.item_offset_end])
         
         for i in range(0,self.item_total):
             try:
