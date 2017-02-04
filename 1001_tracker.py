@@ -149,7 +149,7 @@ class Item1001Tracker(tkinter.Frame):
             self.achi_offset_end = self.achi_offset_start + self.achi_total
             self.chal_total = 35
             self.chal_offset_start = 1859 #0x743-0x765
-            self.chal_offset_end = self.achi_offset_start + self.chal_total
+            self.chal_offset_end = self.chal_offset_start + self.chal_total
         else:
             print("what are you?")
             sys.exit(0)
